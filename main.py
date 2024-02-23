@@ -46,14 +46,14 @@ class MyWidget(QtWidgets.QWidget):
             # print(filePath)
     
     def yolomodel(self):
-        self.model = YOLO("best.pt")
+        self.model = YOLO("YOLO/best.pt")
         result = self.model.predict(source=filePath,mode="predict",project="test",name="predict",save=True,imgsz=(512, 512),conf=0.51,device = "cpu")
         print(type(result))
-        for filename in os.listdir('test\predict'):
+        for filename in os.listdir('test/predict'):
             if filename.endswith(('.png', '.jpg', '.jpeg', '.JPG')):
-                file = os.path.join('test\predict', filename)
+                file = os.path.join('test/predict', filename)
                 img = QtGui.QPixmap(file)
-                # img = img.scaled(512, 512)
+                img = img.scaled(900, 480)
                 self.scene2.clear()
                 self.scene2.addPixmap(img)
                 self.grview2.setScene(self.scene2)
