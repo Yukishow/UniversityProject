@@ -1,6 +1,8 @@
 from ultralytics import YOLO
 from PyQt5 import QtWidgets, QtGui
 from PIL import Image
+from pathlib import Path
+import shutil
 import sys
 import os
 
@@ -47,16 +49,21 @@ class MyWidget(QtWidgets.QWidget):
     
     def yolomodel(self):
         self.model = YOLO("YOLO/best.pt")
-        result = self.model.predict(source=filePath,mode="predict",project="test",name="predict",save=True,imgsz=(512, 512),conf=0.51,device = "cpu")
-        print(type(result))
-        for filename in os.listdir('test/predict'):
-            if filename.endswith(('.png', '.jpg', '.jpeg', '.JPG')):
-                file = os.path.join('test/predict', filename)
-                img = QtGui.QPixmap(file)
-                img = img.scaled(900, 480)
-                self.scene2.clear()
-                self.scene2.addPixmap(img)
-                self.grview2.setScene(self.scene2)
+        result = self.model.predict(source=filePath,mode="predict",project="temp",name="predict",save=True,imgsz=(512, 512),conf=0.51,device = "cpu")
+        # print(result)
+        #一次一張
+        filename = (os.listdir('temp/predict'))[0]
+        if filename.endswith(('.png', '.jpg', '.jpeg', '.JPG')):
+            file = os.path.join('temp/predict', filename)
+            img = QtGui.QPixmap(file)
+            img = img.scaled(900, 480)
+            self.scene2.clear()
+            self.scene2.addPixmap(img)
+            self.grview2.setScene(self.scene2)
+            #檔案搬移
+            shutil.move(os.path.join('temp/predict', filename), 'test')
+            tempfile = Path('temp/predict')
+            shutil.rmtree(tempfile)
 
 
 if __name__ == '__main__':
