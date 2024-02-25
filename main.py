@@ -52,6 +52,7 @@ class MyWidget(QtWidgets.QWidget):
         result = self.model.predict(source=filePath,mode="predict",project="temp",name="predict",save=True,imgsz=(512, 512),conf=0.51,device = "cpu")
         # print(result)
         #一次一張
+        #垃圾桶會出問題
         filename = (os.listdir('temp/predict'))[0]
         if filename.endswith(('.png', '.jpg', '.jpeg', '.JPG')):
             file = os.path.join('temp/predict', filename)
@@ -62,7 +63,7 @@ class MyWidget(QtWidgets.QWidget):
             self.grview2.setScene(self.scene2)
             #檔案搬移
             shutil.move(os.path.join('temp/predict', filename), 'test')
-            tempfile = Path('temp/predict')
+            tempfile = Path('temp')
             shutil.rmtree(tempfile)
 
 
