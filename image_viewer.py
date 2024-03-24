@@ -6,6 +6,8 @@ class ImageViewer(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.zoom_factor = 1.0
+        self.setup_shortcuts()
 
     def initUI(self):
         self.setWindowTitle('Image Viewer')
@@ -44,17 +46,41 @@ class ImageViewer(QtWidgets.QWidget):
     def preImage(self):
         if self.image_paths:
             self.current_index = (self.current_index - 1) % len(self.image_paths)
-            print(f"image_path: {self.image_paths[self.current_index]}")
+            #print(f"image_path: {self.image_paths[self.current_index]}")
             self.showImage()
 
     def nextImage(self):
         if self.image_paths:
             self.current_index = (self.current_index + 1) % len(self.image_paths)
-            print(f"image_path: {self.image_paths[self.current_index]}")
+            #print(f"image_path: {self.image_paths[self.current_index]}")
             self.showImage()
 
     def showImage(self):
         image_path = self.image_paths[self.current_index]
         pixmap = QtGui.QPixmap(image_path)
-        self.image_label.setPixmap(pixmap)
+        scaled_pixmap = pixmap.scaled(pixmap.size() * self.zoom_factor, QtCore.Qt.KeepAspectRatio)
+        self.image_label.setPixmap(scaled_pixmap)
         self.index_label.setText(f"Image {self.current_index + 1}/{len(self.image_paths)}")
+
+    # Ctrl++ 跟 Ctrl+-圖片放大縮小
+    def setup_shortcuts(self):
+        zoom_in_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.ZoomIn), self)
+        zoom_in_shortcut.activated.connect(self.zoom_in)
+
+        zoom_out_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtGui.QKeySequence.ZoomOut), self)
+        zoom_out_shortcut.activated.connect(self.zoom_out)
+
+    def zoom_in(self):
+        self.zoom_factor *= 1.25
+        self.showImage()
+
+    def zoom_out(self):
+        self.zoom_factor /= 1.25
+        self.showImage()
+
+    #可以使用滑鼠滾輪
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            self.zoom_in()
+        else:
+            self.zoom_out()
