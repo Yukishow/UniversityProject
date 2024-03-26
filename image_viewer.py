@@ -25,11 +25,15 @@ class ImageViewer(QtWidgets.QWidget):
         self.next_button = QtWidgets.QPushButton('Next Image', self)
         self.next_button.clicked.connect(self.nextImage)
 
+        self.save_button = QtWidgets.QPushButton('Save Image', self)
+        self.save_button.clicked.connect(self.saveImage)
+
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.image_label)
         layout.addWidget(self.index_label)
         layout.addWidget(self.pre_button)
         layout.addWidget(self.next_button)
+        layout.addWidget(self.save_button)
         self.setLayout(layout)
 
         self.image_paths = []
@@ -84,3 +88,13 @@ class ImageViewer(QtWidgets.QWidget):
             self.zoom_in()
         else:
             self.zoom_out()
+
+    def saveImage(self):
+        image_path = self.image_paths[self.current_index]
+        folder_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image",filter='IMAGE(*.jpg *.png *.JPG)')
+        if folder_path:
+            print(f"folder_path = {folder_path}")
+            pixmap = QtGui.QPixmap(image_path)
+            if pixmap:
+                pixmap.save(folder_path)
+        # self.index_label.setText(f"Image {self.current_index + 1}/{len(self.image_paths)}")
