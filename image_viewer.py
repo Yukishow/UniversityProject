@@ -19,6 +19,9 @@ class ImageViewer(QtWidgets.QWidget):
         self.index_label = QtWidgets.QLabel(self)
         self.index_label.setAlignment(QtCore.Qt.AlignCenter)
 
+        self.saved_label = QtWidgets.QLabel(self)
+        self.saved_label.setAlignment(QtCore.Qt.AlignCenter)
+
         self.pre_button = QtWidgets.QPushButton('Pre Image', self)
         self.pre_button.clicked.connect(self.preImage)
 
@@ -31,6 +34,7 @@ class ImageViewer(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.image_label)
         layout.addWidget(self.index_label)
+        layout.addWidget(self.saved_label)
         layout.addWidget(self.pre_button)
         layout.addWidget(self.next_button)
         layout.addWidget(self.save_button)
@@ -38,11 +42,13 @@ class ImageViewer(QtWidgets.QWidget):
 
         self.image_paths = []
         self.current_index = 0
+        self.image_saved = []
 
     def loadImagePaths(self, folder_path):
         # output_dir = os.path.join(folder_path, "temp", "predict")
         output_dir = folder_path
         self.image_paths = [os.path.join(output_dir, filename) for filename in os.listdir(output_dir) if filename.lower().endswith(('.jpg', '.png', '.jpeg'))]
+        self.image_saved = [0]*len(self.image_paths)
         if self.image_paths:
             self.current_index = 0
             self.showImage()
@@ -65,6 +71,10 @@ class ImageViewer(QtWidgets.QWidget):
         scaled_pixmap = pixmap.scaled(pixmap.size() * self.zoom_factor, QtCore.Qt.KeepAspectRatio)
         self.image_label.setPixmap(scaled_pixmap)
         self.index_label.setText(f"Image {self.current_index + 1}/{len(self.image_paths)}")
+        if self.image_saved[self.current_index] == 1:
+            self.saved_label.setText("Saved")
+        else:
+            self.saved_label.setText("Not Saved")
 
     # Ctrl++ 跟 Ctrl+-圖片放大縮小
     def setup_shortcuts(self):
@@ -93,8 +103,11 @@ class ImageViewer(QtWidgets.QWidget):
         image_path = self.image_paths[self.current_index]
         folder_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Image",filter='IMAGE(*.jpg *.png *.JPG)')
         if folder_path:
-            print(f"folder_path = {folder_path}")
+            # print(f"folder_path = {folder_path}")
             pixmap = QtGui.QPixmap(image_path)
             if pixmap:
                 pixmap.save(folder_path)
+                self.image_saved[self.current_index] = 1
+                self.showImage()
+
         # self.index_label.setText(f"Image {self.current_index + 1}/{len(self.image_paths)}")
