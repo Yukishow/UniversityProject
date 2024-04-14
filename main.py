@@ -3,6 +3,19 @@ from PyQt5 import QtWidgets, QtCore
 from image_viewer import ImageViewer
 import sys
 
+#YOLO 背景執行
+class YOLOThread(QtCore.QThread):
+    finished = QtCore.pyqtSignal()
+
+    def __init__(self, folder_path):
+        super().__init__()
+        self.folder_path = folder_path
+
+    def run(self):
+        model = YOLO("YOLO/best.pt")
+        model.predict(source=self.folder_path, mode="predict", project="temp", name='predict', save=True, imgsz=(512, 512), conf=0.51, device="cpu", save_crop=True)
+        self.finished.emit()
+
 # 主視窗
 class mainWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -20,10 +33,25 @@ class mainWindow(QtWidgets.QWidget):
 
         self.run_button = QtWidgets.QPushButton('執行YOLO')
         self.run_button.clicked.connect(self.runYOLO)
-
-        # self.status_label = QtWidgets.QLabel(self)
-        # self.status_label.setAlignment(QtCore.Qt.AlignCenter)
-
+    
+        style = '''
+            QProgressBar {
+                border-radius: 5px;
+                text-align:center;
+                height: 10px;
+                width:200px;
+            }
+            QProgressBar::chunk {
+                background: #09c;
+                width:1px;
+            }
+        '''
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet(style)
+        
         self.image_button = QtWidgets.QPushButton('查看照片')
         self.image_button.clicked.connect(self.runViewer)
 
@@ -35,26 +63,32 @@ class mainWindow(QtWidgets.QWidget):
         layout.addLayout(folder_layout)
         layout.addWidget(self.image_button)
         layout.addWidget(self.run_button)
-        # layout.addWidget(self.status_label)
+        layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
     def openFolder(self):
         folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
         if folder_path:
             self.folder_edit.setText(folder_path)
-            # self.status_label.setText("Not executed yet")
+           
 
     # YOLO
     def runYOLO(self):
         folder_path = self.folder_edit.text()
         if folder_path:
-            model = YOLO("YOLO/best.pt")
-            model.predict(source=folder_path, mode="predict", project="temp", name='predict', save=True, imgsz=(512, 512), conf=0.51, device="cpu", save_crop=True)
-            # self.status_label.setText("Finished")
-            self.viewer = ImageViewer()
-            folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
-            self.viewer.loadImagePaths(folder_path)
-            self.viewer.show()
+            self.progress_bar.setRange(0, 0)
+            self.progress_bar.setValue(50)
+            self.yolo_thread = YOLOThread(folder_path)
+            self.yolo_thread.finished.connect(self.YOLOFinished)
+            self.yolo_thread.start()
+
+    def YOLOFinished(self):
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.viewer = ImageViewer()
+        folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
+        self.viewer.loadImagePaths(folder_path)
+        self.viewer.show()
 
     def runViewer(self):
         folder_path = self.folder_edit.text()
