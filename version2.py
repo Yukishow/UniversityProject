@@ -3,6 +3,19 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from image_viewer import ImageViewer
 import sys
 
+#YOLO 背景執行
+class YOLOThread(QtCore.QThread):
+    finished = QtCore.pyqtSignal()
+
+    def __init__(self, folder_path):
+        super().__init__()
+        self.folder_path = folder_path
+
+    def run(self):
+        model = YOLO("YOLO/best.pt")
+        model.predict(source=self.folder_path, mode="predict", project="temp", name='predict', save=True, imgsz=(512, 512), conf=0.51, device="cpu", save_crop=True)
+        self.finished.emit()
+
 class mainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -18,7 +31,7 @@ class mainWindow(QtWidgets.QWidget):
         self.main_scene = QtWidgets.QGraphicsScene()
         self.main_scene.setSceneRect(0, 0, 500, 500) #內容物大小
         #這邊要修改成吃圖片List的方式顯示多張
-        self.img = QtGui.QPixmap('411021230.png')
+        self.img = QtGui.QPixmap()
         #後面來研究好像蠻有趣的
         self.img = self.img.scaled(500, 500, aspectRatioMode = QtCore.Qt.KeepAspectRatio)
         self.main_scene.addPixmap(self.img)                   
@@ -35,7 +48,7 @@ class mainWindow(QtWidgets.QWidget):
 
         self.run_button = QtWidgets.QPushButton('執行YOLO',self)
         self.run_button.setGeometry(QtCore.QRect(100, 540, 321, 28))
-        #self.run_button.clicked.connect(self.openFolder)
+        self.run_button.clicked.connect(self.runYOLO)
 
         self.main_random_btn = QtWidgets.QPushButton('換一張',self)
         self.main_random_btn.setGeometry(QtCore.QRect(470, 240, 111, 31))
@@ -205,7 +218,53 @@ class mainWindow(QtWidgets.QWidget):
         self.top10_viewer_btn.setGeometry(QtCore.QRect(1080, 760, 93, 28))
         #self.top10_viewer_btn.clicked.connect(self.openFolder)
 
+        style = '''
+                QProgressBar {
+                    border-radius: 5px;
+                    text-align:center;
+                    height: 10px;
+                    width:200px;
+                }
+                QProgressBar::chunk {
+                    background: #09c;
+                    width:1px;
+                }
+            '''
+    
+        self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet(style)
+        self.progress_bar.setGeometry(QtCore.QRect(100, 590, 321, 28))
+    
 
+    # YOLO
+    def runYOLO(self):
+        folder_path = self.folder_edit.text()
+        if folder_path:
+            self.progress_bar.setRange(0, 0)
+            self.progress_bar.setValue(50)
+            self.yolo_thread = YOLOThread(folder_path)
+            self.yolo_thread.finished.connect(self.YOLOFinished)
+            self.yolo_thread.start()
+
+    def YOLOFinished(self):
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        # self.viewer = ImageViewer()
+        # folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
+        # self.viewer.loadImagePaths(folder_path)
+        # self.viewer.show()
+
+    def runViewer(self):
+        folder_path = self.folder_edit.text()
+        if folder_path:
+            self.viewer = ImageViewer()
+            self.viewer.loadImagePaths(folder_path)
+            self.viewer.show()
+    
+    
     def openFolder(self):
         folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
         if folder_path:
