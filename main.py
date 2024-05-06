@@ -1,6 +1,7 @@
 from ultralytics import YOLO
 from PyQt5 import QtWidgets, QtCore
 from image_viewer import ImageViewer
+from identifier import identifier
 import sys
 
 #YOLO 背景執行
@@ -33,7 +34,10 @@ class mainWindow(QtWidgets.QWidget):
 
         self.run_button = QtWidgets.QPushButton('執行YOLO')
         self.run_button.clicked.connect(self.runYOLO)
-    
+
+        self.recognizer_button = QtWidgets.QPushButton('分類器')
+        self.recognizer_button.clicked.connect(self.runrecognizer)
+
         style = '''
             QProgressBar {
                 border-radius: 5px;
@@ -54,7 +58,7 @@ class mainWindow(QtWidgets.QWidget):
         
         self.image_button = QtWidgets.QPushButton('查看照片')
         self.image_button.clicked.connect(self.runViewer)
-
+        
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.folder_label)
         folder_layout = QtWidgets.QHBoxLayout()
@@ -63,6 +67,7 @@ class mainWindow(QtWidgets.QWidget):
         layout.addLayout(folder_layout)
         layout.addWidget(self.image_button)
         layout.addWidget(self.run_button)
+        layout.addWidget(self.recognizer_button)
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
@@ -85,10 +90,10 @@ class mainWindow(QtWidgets.QWidget):
     def YOLOFinished(self):
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
-        self.viewer = ImageViewer()
-        folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
-        self.viewer.loadImagePaths(folder_path)
-        self.viewer.show()
+        # self.viewer = ImageViewer()
+        # folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "選擇資料夾")
+        # self.viewer.loadImagePaths(folder_path)
+        # self.viewer.show()
 
     def runViewer(self):
         folder_path = self.folder_edit.text()
@@ -96,6 +101,10 @@ class mainWindow(QtWidgets.QWidget):
             self.viewer = ImageViewer()
             self.viewer.loadImagePaths(folder_path)
             self.viewer.show()
+
+    def runrecognizer(self):
+        self.check = identifier()
+        self.check.show()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
